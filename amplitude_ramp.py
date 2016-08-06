@@ -39,12 +39,19 @@ from Queue import Queue
 #  feedback magnitude
 TCP_PORT = 47009
 
+def xrange(start, stop, step):
+    x = start
+    while x < stop:
+        yield x
+        x += step
+
 class amplitude_ramp(gr.top_block):
-    def __init__(self, txgain):
+    def __init__(self, options):
         gr.top_block.__init__(self, "Amplitude Ramp")
 
-        self.txgain = txgain
-        self.source_ampl = 0.1
+        self.txgain = float(options.txgain)
+        self.source_ampl = float(options.ampl_start)
+
         self.samp_rate = 4e6
         self.rxgain = 0
         self.freq = 222e6
@@ -175,12 +182,15 @@ class amplitude_ramp(gr.top_block):
 
 
 class RampGenerator(threading.Thread):
-    def __init__(self, num_meas):
+    def __init__(self, options):
         threading.Thread.__init__(self)
         self.event_queue_ = Queue()
         self.in_queue_ = Queue()
 
-        self.num_meas = num_meas
+        self.num_meas = int(options.num_meas)
+        self.ampl_start = float(options.ampl_start)
+        self.ampl_step = float(options.ampl_step)
+        self.ampl_stop = float(options.ampl_stop)
 
     def set_source_ampl(self, ampl):
         self.event_queue_.put(ampl)
@@ -209,7 +219,7 @@ class RampGenerator(threading.Thread):
         sock.connect(("localhost", TCP_PORT))
         print("Connected")
 
-        amplitudes = [0.1 * x for x in range(10)]
+        amplitudes = xrange(self.ampl_start, self.ampl_stop, self.ampl_step)
         measurements = []
 
         for ampl in amplitudes:
@@ -245,6 +255,21 @@ class RampGenerator(threading.Thread):
 
 parser = argparse.ArgumentParser(description='Two-tone amplitude ramp')
 
+parser.add_argument('--ampl-start',
+        default='0.1',
+        help='Start amplitude',
+        required=False)
+
+parser.add_argument('--ampl-stop',
+        default='0.8',
+        help='Stop amplitude',
+        required=False)
+
+parser.add_argument('--ampl-step',
+        default='0.02',
+        help='Amplitude steps',
+        required=False)
+
 parser.add_argument('--txgain',
         default='10',
         help='txgain for USRP sink',
@@ -257,13 +282,13 @@ parser.add_argument('--num-meas',
 
 cli_args = parser.parse_args()
 
-rampgen = RampGenerator(int(cli_args.num_meas))
+rampgen = RampGenerator(cli_args)
 rampgen.start()
 
 # this blocks until the flowgraph is up and running, i.e. all sockets
 # got a connection
-top = amplitude_ramp(float(cli_args.txgain))
-top.set_source_ampl(0.1)
+top = amplitude_ramp(cli_args)
+top.set_source_ampl(float(cli_args.ampl_start))
 top.start()
 
 while True:
