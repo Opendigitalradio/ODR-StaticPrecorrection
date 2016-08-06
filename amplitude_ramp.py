@@ -188,6 +188,7 @@ class RampGenerator(threading.Thread):
         self.in_queue_ = Queue()
 
         self.num_meas = int(options.num_meas)
+        self.num_meas_to_skip = int(options.num_meas_to_skip)
         self.ampl_start = float(options.ampl_start)
         self.ampl_step = float(options.ampl_step)
         self.ampl_stop = float(options.ampl_stop)
@@ -228,6 +229,10 @@ class RampGenerator(threading.Thread):
             mag_gen_sum = 0
             phase_diff_sum = 0
             mag_feedback_sum = 0
+
+            for measurement_ignore in range(self.num_meas_to_skip):
+                # Receive and ignore three floats on the socket
+                sock.recv(12)
 
             for measurement_ix in range(self.num_meas):
                 # Receive three floats on the socket
@@ -278,6 +283,11 @@ parser.add_argument('--txgain',
 parser.add_argument('--num-meas',
         default='2000',
         help='number of measurements per amplitude',
+        required=False)
+
+parser.add_argument('--num-meas-to-skip',
+        default='50',
+        help='After each amplitude change, ignore num-meas-to-skip measurements',
         required=False)
 
 cli_args = parser.parse_args()
