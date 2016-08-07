@@ -16,7 +16,9 @@ against the source signal. The measurements are written into a CSV file.
 It's your job to ensure you don't overload the B200 input signal power (-15dBm
 last time I checked).
 
-First step is to gather some measurements:
+Before you can start, use gnuradio-companion to generate dual_tone.py from dual_tone.grc
+
+Then gather some measurements
 
     ./amplitude_ramp.py --ampl-start 0.15 --ampl-stop 0.5 --ampl-step 0.01 --num-meas 300 --txgain 77
 

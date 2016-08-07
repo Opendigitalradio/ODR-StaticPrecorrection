@@ -31,158 +31,20 @@ import socket
 import struct
 import threading
 from Queue import Queue
+from dual_tone import dual_tone # our flowgraph!
 
 # TCP ports used to communicate between the flowgraph and the python script
 # The flowgraph interleaves 3 float streams :
 #  generator magnitude
 #  phase difference
 #  feedback magnitude
-TCP_PORT = 47009
+TCP_PORT = 47009 # must be the same as in dual_tone!
 
 def xrange(start, stop, step):
     x = start
     while x < stop:
         yield x
         x += step
-
-class amplitude_ramp(gr.top_block):
-    def __init__(self, options):
-        gr.top_block.__init__(self, "Amplitude Ramp")
-
-        self.txgain = float(options.txgain)
-        self.source_ampl = float(options.ampl_start)
-
-        self.samp_rate = 4e6
-        self.rxgain = 0
-        self.freq = 222e6
-        self.decim = 4000
-
-        # Two-tone signal generator at 1kHz and 2kHz
-        self.analog_sig_source_x_0 = analog.sig_source_c(
-                self.samp_rate, analog.GR_COS_WAVE, 1000, self.source_ampl, 0)
-        self.analog_sig_source_x_1 = analog.sig_source_c(
-                self.samp_rate, analog.GR_COS_WAVE, 2000, self.source_ampl, 0)
-        self.blocks_add_xx_0 = blocks.add_vcc(1)
-
-        # Connects to both USRP output, mag and phase converter
-
-        self.uhd_usrp_sink_0 = uhd.usrp_sink(
-                "",
-                uhd.stream_args(
-                    cpu_format="fc32",
-                    channels=range(1),
-                    ),
-                )
-        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
-        self.uhd_usrp_sink_0.set_center_freq(self.freq, 0)
-        self.uhd_usrp_sink_0.set_gain(self.txgain, 0)
-
-        self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
-
-        self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
-        self.blocks_complex_to_arg_0 = blocks.complex_to_arg(1)
-
-        # mag goes to TCP interleaver, phase goes to complex multiplier
-        # and complex-to-arg
-
-        # Feedback from the USRP, goes to the subtractor after mag/phase
-        self.blocks_complex_to_mag_squared_1 = blocks.complex_to_mag_squared(1)
-        self.uhd_usrp_source_0 = uhd.usrp_source(
-                "",
-                uhd.stream_args(
-                    cpu_format="fc32",
-                    channels=range(1),
-                    ),
-                )
-        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
-        self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
-        self.uhd_usrp_source_0.set_gain(self.rxgain, 0)
-
-        # The interleaved takes gen mag, phase diff and feedback mag
-        # signals and puts them together. We need to decimate before we interleave
-        self.blocks_moving_average_gen = blocks.moving_average_ff(self.decim, 1, 4000)
-        self.fir_filter_gen = filter.fir_filter_fff(self.decim, ([1]))
-        self.fir_filter_gen.declare_sample_delay(0)
-
-        self.blocks_moving_average_phase = blocks.moving_average_ff(self.decim, 1, 4000)
-        self.fir_filter_phase = filter.fir_filter_fff(self.decim, ([1]))
-        self.fir_filter_phase.declare_sample_delay(0)
-
-        self.blocks_moving_average_feedback = blocks.moving_average_ff(self.decim, 1, 4000)
-        self.fir_filter_feedback = filter.fir_filter_fff(self.decim, ([1]))
-        self.fir_filter_feedback.declare_sample_delay(0)
-
-        self.blocks_interleave = blocks.interleave(gr.sizeof_float*1, 1)
-
-        self.blks2_tcp_sink_0 = grc_blks2.tcp_sink(
-                itemsize=gr.sizeof_float*1,
-                addr="127.0.0.1",
-                port=TCP_PORT,
-                server=True,
-                )
-
-        # Connect outgoing
-        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_add_xx_0, 1))
-        self.connect((self.analog_sig_source_x_1, 0), (self.blocks_add_xx_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
-
-        self.connect((self.blocks_complex_to_mag_squared_0, 0),
-                (self.blocks_moving_average_gen, 0))
-        self.connect((self.blocks_moving_average_gen, 0),
-                (self.fir_filter_gen, 0))
-        self.connect((self.fir_filter_gen, 0), (self.blocks_interleave, 0))
-
-        # Connect feedback
-        self.connect((self.uhd_usrp_source_0, 0),
-                (self.blocks_complex_to_mag_squared_1, 0))
-        self.connect((self.uhd_usrp_source_0, 0),
-                (self.blocks_multiply_conjugate_cc_0, 1))
-
-        # Connect phase comparator
-        self.connect((self.blocks_multiply_conjugate_cc_0, 0),
-                (self.blocks_complex_to_arg_0, 0))
-        self.connect((self.blocks_complex_to_arg_0, 0),
-                (self.blocks_moving_average_phase, 0))
-        self.connect((self.blocks_moving_average_phase, 0), (self.fir_filter_phase, 0))
-        self.connect((self.fir_filter_phase, 0), (self.blocks_interleave, 1))
-
-        self.connect((self.blocks_complex_to_mag_squared_1, 0),
-                (self.blocks_moving_average_feedback, 0))
-        self.connect((self.blocks_moving_average_feedback, 0),
-                (self.fir_filter_feedback, 0))
-        self.connect((self.fir_filter_feedback, 0),
-                (self.blocks_interleave, 2))
-
-        # connect interleaver output to TCP socket
-        self.connect((self.blocks_interleave, 0), (self.blks2_tcp_sink_0, 0))
-
-
-    def get_txgain(self):
-        return self.txgain
-
-    def set_txgain(self, txgain):
-        self.txgain = txgain
-        self.uhd_usrp_sink_0.set_gain(self.txgain, 0)
-
-    def get_source_ampl(self):
-        return self.source_ampl
-
-    def set_source_ampl(self, source_ampl):
-        print("Set amplitude to {}".format(source_ampl))
-        self.source_ampl = source_ampl
-        self.analog_sig_source_x_0.set_amplitude(self.source_ampl)
-        self.analog_sig_source_x_1.set_amplitude(self.source_ampl)
-
-    def get_freq(self):
-        return self.freq
-
-    def set_freq(self, freq):
-        self.freq = freq
-        self.uhd_usrp_sink_0.set_center_freq(self.freq, 0)
-        self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
-
 
 class RampGenerator(threading.Thread):
     def __init__(self, options):
@@ -293,6 +155,11 @@ parser.add_argument('--num-meas-to-skip',
         help='After each amplitude change, ignore num-meas-to-skip measurements',
         required=False)
 
+parser.add_argument('--decim',
+        default='4000',
+        help='Interval in samples between when to take the average of the measurements',
+        required=False)
+
 cli_args = parser.parse_args()
 
 rampgen = RampGenerator(cli_args)
@@ -300,27 +167,35 @@ rampgen.start()
 
 # this blocks until the flowgraph is up and running, i.e. all sockets
 # got a connection
-top = amplitude_ramp(cli_args)
+top = dual_tone()
+
+top.set_decim(int(cli_args.decim))
+top.set_txgain = float(cli_args.txgain)
+top.set_rxgain = 0
 top.set_source_ampl(float(cli_args.ampl_start))
+
+time.sleep(.5)
+
 top.start()
 
-while True:
-    event = rampgen.wait_on_event()
-    if event == "done":
-        measurements = rampgen.wait_on_event()
-        fd = open("measurements.csv", "w")
-        for m in measurements:
-            fd.write(",".join("{}".format(x) for x in m) + "\n")
-        fd.close()
-        break
-    elif event == "quit":
-        break
-    else:
-        top.set_source_ampl(event)
-        rampgen.confirm_source_ampl_updated()
-
-top.stop()
-print("Wait for completion")
-top.wait()
+try:
+    while True:
+        event = rampgen.wait_on_event()
+        if event == "done":
+            measurements = rampgen.wait_on_event()
+            fd = open("measurements.csv", "w")
+            for m in measurements:
+                fd.write(",".join("{}".format(x) for x in m) + "\n")
+            fd.close()
+            break
+        elif event == "quit":
+            break
+        else:
+            top.set_source_ampl(event)
+            rampgen.confirm_source_ampl_updated()
+finally:
+    top.stop()
+    print("Wait for completion")
+    top.wait()
 
 print("Done")
