@@ -64,7 +64,7 @@ class amplitude_ramp(gr.top_block):
                 self.samp_rate, analog.GR_COS_WAVE, 2000, self.source_ampl, 0)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
 
-        # Connects to both USRP output and mag/phase converter
+        # Connects to both USRP output, mag and phase converter
 
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
                 "",
@@ -77,14 +77,16 @@ class amplitude_ramp(gr.top_block):
         self.uhd_usrp_sink_0.set_center_freq(self.freq, 0)
         self.uhd_usrp_sink_0.set_gain(self.txgain, 0)
 
-        self.blocks_complex_to_magphase_0 = blocks.complex_to_magphase(1)
+        self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
 
+        self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
+        self.blocks_complex_to_arg_0 = blocks.complex_to_arg(1)
 
-        # mag goes to TCP interleaved, phase goes to subtractor. There is
-        # no substraction block, so it is done with multiply by -1 and add
+        # mag goes to TCP interleaver, phase goes to complex multiplier
+        # and complex-to-arg
 
         # Feedback from the USRP, goes to the subtractor after mag/phase
-        self.blocks_complex_to_magphase_1 = blocks.complex_to_magphase(1)
+        self.blocks_complex_to_mag_squared_1 = blocks.complex_to_mag_squared(1)
         self.uhd_usrp_source_0 = uhd.usrp_source(
                 "",
                 uhd.stream_args(
@@ -95,9 +97,6 @@ class amplitude_ramp(gr.top_block):
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
         self.uhd_usrp_source_0.set_gain(self.rxgain, 0)
-
-        self.blocks_invert_signal = blocks.multiply_const_vff((-1, ))
-        self.blocks_phase_adder = blocks.add_vff(1)
 
         # The interleaved takes gen mag, phase diff and feedback mag
         # signals and puts them together. We need to decimate before we interleave
@@ -125,27 +124,31 @@ class amplitude_ramp(gr.top_block):
         # Connect outgoing
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.analog_sig_source_x_1, 0), (self.blocks_add_xx_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.blocks_complex_to_magphase_0, 0))
+        self.connect((self.blocks_add_xx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.blocks_add_xx_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
 
-        self.connect((self.blocks_complex_to_magphase_0, 0),
+        self.connect((self.blocks_complex_to_mag_squared_0, 0),
                 (self.blocks_moving_average_gen, 0))
         self.connect((self.blocks_moving_average_gen, 0),
                 (self.fir_filter_gen, 0))
         self.connect((self.fir_filter_gen, 0), (self.blocks_interleave, 0))
 
-        self.connect((self.blocks_complex_to_magphase_0, 1),
-                (self.blocks_invert_signal, 0))
-        self.connect((self.blocks_invert_signal, 0), (self.blocks_phase_adder, 1))
-
         # Connect feedback
-        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_complex_to_magphase_1, 0))
-        self.connect((self.blocks_complex_to_magphase_1, 1), (self.blocks_phase_adder, 0))
-        self.connect((self.blocks_phase_adder, 0), (self.blocks_moving_average_phase, 0))
+        self.connect((self.uhd_usrp_source_0, 0),
+                (self.blocks_complex_to_mag_squared_1, 0))
+        self.connect((self.uhd_usrp_source_0, 0),
+                (self.blocks_multiply_conjugate_cc_0, 1))
+
+        # Connect phase comparator
+        self.connect((self.blocks_multiply_conjugate_cc_0, 0),
+                (self.blocks_complex_to_arg_0, 0))
+        self.connect((self.blocks_complex_to_arg_0, 0),
+                (self.blocks_moving_average_phase, 0))
         self.connect((self.blocks_moving_average_phase, 0), (self.fir_filter_phase, 0))
         self.connect((self.fir_filter_phase, 0), (self.blocks_interleave, 1))
 
-        self.connect((self.blocks_complex_to_magphase_1, 0),
+        self.connect((self.blocks_complex_to_mag_squared_1, 0),
                 (self.blocks_moving_average_feedback, 0))
         self.connect((self.blocks_moving_average_feedback, 0),
                 (self.fir_filter_feedback, 0))
