@@ -170,8 +170,8 @@ rampgen.start()
 top = dual_tone()
 
 top.set_decim(int(cli_args.decim))
-top.set_txgain = float(cli_args.txgain)
-top.set_rxgain = 0
+top.set_txgain(float(cli_args.txgain))
+top.set_rxgain(0)
 top.set_source_ampl(float(cli_args.ampl_start))
 
 time.sleep(.5)
