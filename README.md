@@ -4,10 +4,10 @@ Measure amplifier non-linearity using two-tone signal
 HOWTO
 -----
 
- # Take a USRP B200
- # Connect its TX to the amplifier you want to measure
- # Connect the amp to an big enough attenuator
- # Connect to the B200 RX
+  1. Take a USRP B200
+  1. Connect its TX to the amplifier you want to measure
+  1. Connect the amp to an big enough attenuator
+  1. Connect to the B200 RX
 
 The amplitude ramp script is going to generate a two-tone (1kHz separation)
 signal at 222MHz, and record outgoing signal magnitude and phase difference
