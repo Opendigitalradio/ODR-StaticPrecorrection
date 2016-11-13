@@ -6,7 +6,7 @@ HOWTO
 
   1. Take a USRP B200
   1. Connect its TX to the amplifier you want to measure
-  1. Connect the amp to an big enough attenuator
+  1. Connect the amp to an big enough attenuator in order to reduce power to below 1mW
   1. Connect to the B200 RX
 
 The amplitude ramp script is going to generate a two-tone (1kHz separation)
