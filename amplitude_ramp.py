@@ -32,6 +32,7 @@ import struct
 import threading
 from Queue import Queue
 from dual_tone import dual_tone # our flowgraph!
+import tcp_async
 
 # TCP ports used to communicate between the flowgraph and the python script
 # The flowgraph interleaves 3 float streams :
@@ -47,7 +48,9 @@ def xrange(start, stop, step):
         x += step
 
 class RampGenerator(threading.Thread):
-    def __init__(self, options):
+    tcpa = None
+
+    def __init__(self, options, tcpa):
         threading.Thread.__init__(self)
         self.event_queue_ = Queue()
         self.in_queue_ = Queue()
@@ -57,6 +60,8 @@ class RampGenerator(threading.Thread):
         self.ampl_start = float(options.ampl_start)
         self.ampl_step = float(options.ampl_step)
         self.ampl_stop = float(options.ampl_stop)
+
+        self.tcpa = tcpa
 
     def set_source_ampl(self, ampl):
         self.event_queue_.put(ampl)
@@ -89,36 +94,48 @@ class RampGenerator(threading.Thread):
         measurements = []
 
         for ampl in amplitudes:
-            self.set_source_ampl(ampl)
+            measurement_correct = False
+            max_iter = 10
+            while measurement_correct == False and max_iter > 0:
+                max_iter -= 1
 
-            mag_gen_sum = 0
-            phase_diff_sum = 0
-            mag_feedback_sum = 0
+                self.set_source_ampl(ampl)
 
-            for measurement_ignore in range(self.num_meas_to_skip):
-                # Receive and ignore three floats on the socket
-                sock.recv(12)
+                mag_gen_sum = 0
+                phase_diff_sum = 0
+                mag_feedback_sum = 0
 
-            for measurement_ix in range(self.num_meas):
-                # Receive three floats on the socket
-                mag_gen, phase_diff, mag_feedback = struct.unpack(
-                        "fff",
-                        sock.recv(12))
+                for measurement_ignore in range(self.num_meas_to_skip):
+                    # Receive and ignore three floats on the socket
+                    sock.recv(12)
 
-                mag_gen_sum += mag_gen
-                phase_diff_sum += phase_diff
-                mag_feedback_sum += mag_feedback
+                for measurement_ix in range(self.num_meas):
+                    # Receive three floats on the socket
+                    mag_gen, phase_diff, mag_feedback = struct.unpack(
+                            "fff",
+                            sock.recv(12))
 
-                measurements.append((ampl, mag_gen, mag_feedback, phase_diff))
+                    mag_gen_sum += mag_gen
+                    phase_diff_sum += phase_diff
+                    mag_feedback_sum += mag_feedback
 
-            mag_gen_avg = mag_gen_sum / self.num_meas
-            mag_feedback_avg = mag_feedback_sum / self.num_meas
-            phase_diff_avg = phase_diff_sum / self.num_meas
+                    measurements.append((ampl, mag_gen, mag_feedback, phase_diff))
 
-            print("Ampl: {} Out: {:10} In: {:10} phase_diff: {:10}".format(
-                ampl, mag_gen_avg, mag_feedback_avg, phase_diff_avg))
+                mag_gen_avg = mag_gen_sum / self.num_meas
+                mag_feedback_avg = mag_feedback_sum / self.num_meas
+                phase_diff_avg = phase_diff_sum / self.num_meas
+
+                #Check asynchronous uhd messages for error
+                has_msg = self.tcpa.has_msg()
+                if not has_msg:
+                    measurement_correct = True
+                    print("Ampl: {} Out: {:10} In: {:10} phase_diff: {:10}".format(
+                        ampl, mag_gen_avg, mag_feedback_avg, phase_diff_avg))
+                else:
+                    print("Retry measurements")
 
 
+        self.tcpa.stop()
         self.event_queue_.put("done")
         self.event_queue_.put(measurements)
 
@@ -161,8 +178,9 @@ parser.add_argument('--decim',
         required=False)
 
 cli_args = parser.parse_args()
+tcpa = tcp_async.UhdAsyncMsg()
 
-rampgen = RampGenerator(cli_args)
+rampgen = RampGenerator(cli_args, tcpa)
 rampgen.start()
 
 # this blocks until the flowgraph is up and running, i.e. all sockets
