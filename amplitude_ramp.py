@@ -30,6 +30,7 @@ import time
 import socket
 import struct
 import threading
+import numpy as np
 from Queue import Queue
 from dual_tone import dual_tone # our flowgraph!
 import tcp_async
@@ -109,17 +110,20 @@ class RampGenerator(threading.Thread):
                     # Receive and ignore three floats on the socket
                     sock.recv(12)
 
+                measurements_new = []
                 for measurement_ix in range(self.num_meas):
                     # Receive three floats on the socket
                     mag_gen, phase_diff, mag_feedback = struct.unpack(
                             "fff",
                             sock.recv(12))
 
+                    phase_diff = phase_diff % 720
+
                     mag_gen_sum += mag_gen
                     phase_diff_sum += phase_diff
                     mag_feedback_sum += mag_feedback
 
-                    measurements.append((ampl, mag_gen, mag_feedback, phase_diff))
+                    measurements_new.append((ampl, mag_gen, mag_feedback, phase_diff))
 
                 mag_gen_avg = mag_gen_sum / self.num_meas
                 mag_feedback_avg = mag_feedback_sum / self.num_meas
@@ -128,6 +132,7 @@ class RampGenerator(threading.Thread):
                 #Check asynchronous uhd messages for error
                 has_msg = self.tcpa.has_msg()
                 if not has_msg:
+                    measurements.append([np.mean(meas) for meas in zip(*measurements_new)])
                     measurement_correct = True
                     print("Ampl: {} Out: {:10} In: {:10} phase_diff: {:10}".format(
                         ampl, mag_gen_avg, mag_feedback_avg, phase_diff_avg))

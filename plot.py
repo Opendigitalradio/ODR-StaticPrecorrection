@@ -10,6 +10,10 @@
 
 import numpy as np
 import matplotlib.pyplot as pp
+import os
+
+if not os.path.isdir("./plots"):
+    os.makedirs("./plots")
 
 measurements = np.loadtxt("measurements.csv", delimiter=",")
 
@@ -24,15 +28,17 @@ pp.subplot(312)
 pp.plot(mag_feedback)
 pp.subplot(313)
 pp.plot(phase_diff)
+pp.savefig("plots/mag_gen-mag_feedback-pahase_diff.png")
 
 pp.figure()
 pp.scatter(mag_gen, mag_feedback)
+pp.savefig("plots/mag_gen-vs-mag_feedback.png")
 
 pp.figure()
 mag_gen_norm = mag_gen / mag_gen.max()
 mag_feedback_norm = mag_feedback / mag_feedback.max()
 pp.plot(mag_gen_norm - mag_feedback_norm)
+pp.savefig("plots/mag_gen-minus-mag_feedback.png")
 
-pp.show()
-
+#pp.show()
 
