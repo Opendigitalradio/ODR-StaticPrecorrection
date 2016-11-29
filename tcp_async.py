@@ -22,7 +22,8 @@ class TcpAsyncClient(threading.Thread):
 
 
         #Establish connection
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock = None
+        print("Connecting to asynchronous uhd message tcp port " + str(self.port))
         while 1:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,6 +34,7 @@ class TcpAsyncClient(threading.Thread):
                 #traceback.print_exc()
                 sock.close()
                 time.sleep(0.5)
+        print("Connected to asynchronous uhd message tcp port " + str(self.port))
 
         #Read messages
         sock.settimeout(1)

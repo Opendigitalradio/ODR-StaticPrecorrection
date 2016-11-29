@@ -26,6 +26,7 @@ from gnuradio import gr
 from gnuradio import uhd
 from grc_gnuradio import blks2 as grc_blks2
 import argparse
+import pickle
 import time
 import socket
 import struct
@@ -50,6 +51,7 @@ def xrange(start, stop, step):
 
 class RampGenerator(threading.Thread):
     tcpa = None
+    lut_dict = None
 
     def __init__(self, options, tcpa):
         threading.Thread.__init__(self)
@@ -62,7 +64,18 @@ class RampGenerator(threading.Thread):
         self.ampl_step = float(options.ampl_step)
         self.ampl_stop = float(options.ampl_stop)
 
+        self.output_file = options.out
+
+        if not options.lut is '':
+            self.lut_dict = pickle.load(open(options.lut, "rb"))
+
         self.tcpa = tcpa
+
+    def lut(self, ampl):
+        if self.lut_dict is None:
+            return 1
+        else:
+            return np.interp(ampl, self.lut_dict["ampl"], self.lut_dict["fac"])
 
     def set_source_ampl(self, ampl):
         self.event_queue_.put(ampl)
@@ -95,12 +108,13 @@ class RampGenerator(threading.Thread):
         measurements = []
 
         for ampl in amplitudes:
+            ampl_lut = self.lut(ampl) * ampl
             measurement_correct = False
             max_iter = 10
             while measurement_correct == False and max_iter > 0:
                 max_iter -= 1
 
-                self.set_source_ampl(ampl)
+                self.set_source_ampl(ampl_lut)
 
                 mag_gen_sum = 0
                 phase_diff_sum = 0
@@ -140,6 +154,8 @@ class RampGenerator(threading.Thread):
                     print("Retry measurements")
 
 
+        name = self.output_file
+        pickle.dump(measurements, open(name, "wb"))
         self.tcpa.stop()
         self.event_queue_.put("done")
         self.event_queue_.put(measurements)
@@ -180,6 +196,16 @@ parser.add_argument('--num-meas-to-skip',
 parser.add_argument('--decim',
         default='4000',
         help='Interval in samples between when to take the average of the measurements',
+        required=False)
+
+parser.add_argument('--lut',
+        default='',
+        help='Path to look up table file',
+        required=False)
+
+parser.add_argument('--out',
+        default='measurements.pkl',
+        help='Output file for measurements (.pkl)',
         required=False)
 
 cli_args = parser.parse_args()
