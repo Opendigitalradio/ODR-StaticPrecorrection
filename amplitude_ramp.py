@@ -68,6 +68,9 @@ class RampGenerator(threading.Thread):
 
         if not options.lut is '':
             self.lut_dict = pickle.load(open(options.lut, "rb"))
+            assert(type(self.lut_dict) == dict)
+            assert(len(self.lut_dict["ampl"]) > 2)
+            assert(len(self.lut_dict["fac"])  > 2)
 
         self.tcpa = tcpa
 
@@ -75,7 +78,10 @@ class RampGenerator(threading.Thread):
         if self.lut_dict is None:
             return 1
         else:
-            return np.interp(ampl, self.lut_dict["ampl"], self.lut_dict["fac"])
+            interp = np.interp(ampl, self.lut_dict["ampl"], self.lut_dict["fac"])
+            print("interp " + str(interp))
+            print("ampl " + str(ampl))
+            return interp
 
     def set_source_ampl(self, ampl):
         self.event_queue_.put(ampl)
@@ -107,8 +113,10 @@ class RampGenerator(threading.Thread):
         amplitudes = xrange(self.ampl_start, self.ampl_stop, self.ampl_step)
         measurements = []
 
-        for ampl in amplitudes:
+        for idx, ampl in enumerate(amplitudes):
+            print("run ampl " + str(ampl))
             ampl_lut = self.lut(ampl) * ampl
+            print("run ampl_lut " + str(ampl_lut))
             measurement_correct = False
             max_iter = 10
             while measurement_correct == False and max_iter > 0:
@@ -240,6 +248,8 @@ try:
         elif event == "quit":
             break
         else:
+            print("event")
+            print(event)
             top.set_source_ampl(event)
             rampgen.confirm_source_ampl_updated()
 finally:

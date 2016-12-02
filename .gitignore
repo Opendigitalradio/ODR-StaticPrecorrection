@@ -1,0 +1,35 @@
+.directory
+.ipynb_checkpoints/
+.plot.py.swp
+dual_tone.py
+dual_tone.pyc
+lut.pkl
+lut_plot/
+lut_sq.pkl
+lut_tab.pkl
+measurements.csv
+measurements.pkl
+measurements_lut.pkl
+measurements_lut_sq.pkl
+measurements_tab.pkl
+plots/
+tcp_async.pyc
+usrp_rx
+usrp_tx
+lut_generator.py
+
+
+
+# Created by https://www.gitignore.io/api/vim
+
+### Vim ###
+# swap
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
+tags
