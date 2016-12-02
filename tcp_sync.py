@@ -1,21 +1,21 @@
-"""Tcp client for asynchronous uhd message tcp port"""
+"""Tcp client for synchronous uhd message tcp port"""
 
 import threading
 import Queue
 import time
 import socket
+import struct
 
-class _TcpAsyncClient(threading.Thread):
+class _TcpSyncClient(threading.Thread):
     """Thead for message polling"""
     queue = Queue.Queue()
     q_quit = Queue.Queue()
 
     ip_address = None
     port = None
-    BUFFER_SIZE = 1
 
     def __init__(self, ip_address, port):
-        super(_TcpAsyncClient, self).__init__()
+        super(_TcpSyncClient, self).__init__()
         self.ip_address = ip_address
         self.port = port
 
@@ -27,41 +27,46 @@ class _TcpAsyncClient(threading.Thread):
 
         #Establish connection
         sock = None
-        print("Connecting to asynchronous uhd message tcp port " + str(self.port))
+        print("Connecting to synchronous uhd message tcp port " + str(self.port))
         while 1:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((self.ip_address, self.port))
                 break
             except socket.error:
-                print("connecting to asynchronous uhd message tcp port " + str(self.port))
+                print("connecting to synchronous uhd message tcp port " + str(self.port))
                 #traceback.print_exc()
                 sock.close()
                 time.sleep(0.5)
-        print("Connected to asynchronous uhd message tcp port " + str(self.port))
+        print("Connected to synchronous uhd message tcp port " + str(self.port))
 
         #Read messages
-        sock.settimeout(1)
+        sock.settimeout(None)
         while self.q_quit.empty():
             try:
-                data = sock.recv(self.BUFFER_SIZE)
-                self.queue.put(data)
+                s = sock.recv(12)
+                res_tuple = struct.unpack(
+                        "fff",
+                        s)
+                assert(type(res_tuple) is tuple), (type(res_list), res_tuple)
+                self.queue.put(res_tuple)
             except socket.timeout:
+                traceback.print_exc()
                 pass
 
         sock.close()
 
     def stop(self):
         """stop thread"""
-        print("stop tcp_async uhd message tcp thread")
+        print("stop tcp_sync uhd message tcp thread")
         self.q_quit.put("end")
 
 
-class UhdAsyncMsg(object):
-    """Creates a thread to connect to the asynchronous uhd messages tcp port"""
+class UhdSyncMsg(object):
+    """Creates a thread to connect to the synchronous uhd messages tcp port"""
 
-    def __init__(self, ip_address = "127.0.0.1", port = 47010):
-        self.tcpa = _TcpAsyncClient(ip_address, port)
+    def __init__(self, ip_address = "127.0.0.1", port = 47009):
+        self.tcpa = _TcpSyncClient(ip_address, port)
         self.tcpa.start()
 
     def __exit__(self):
@@ -73,9 +78,9 @@ class UhdAsyncMsg(object):
 
     def get_res(self):
         """get received messages as string of integer"""
-        out = ""
+        out = []
         while not self.tcpa.queue.empty():
-            out += str(ord(self.tcpa.queue.get()))
+            out.append(self.tcpa.queue.get())
         return out
 
     def has_msg(self):
