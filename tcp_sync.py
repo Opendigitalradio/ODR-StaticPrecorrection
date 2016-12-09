@@ -14,10 +14,12 @@ class _TcpSyncClient(threading.Thread):
     ip_address = None
     port = None
 
-    def __init__(self, ip_address, port):
+    def __init__(self, ip_address, port, packet_size, packet_type):
         super(_TcpSyncClient, self).__init__()
         self.ip_address = ip_address
         self.port = port
+        self.packet_size = packet_size
+        self.packet_type = packet_type
 
     def __exit__(self):
         self.stop()
@@ -28,7 +30,7 @@ class _TcpSyncClient(threading.Thread):
         #Establish connection
         sock = None
         print("Connecting to synchronous uhd message tcp port " + str(self.port))
-        while 1:
+        while self.q_quit.empty():
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((self.ip_address, self.port))
@@ -44,13 +46,24 @@ class _TcpSyncClient(threading.Thread):
         sock.settimeout(None)
         while self.q_quit.empty():
             try:
-                s = sock.recv(12)
+                s = ""
+
+                #concatenate to one package
+                while self.q_quit.empty():
+                    s += sock.recv(self.packet_size)
+                    if (len(s)) == self.packet_size:
+                        break
+                    if (len(s)) > self.packet_size:
+                        print("received wrong size of length " + str(len(s)))
+                        time.sleep(0.01)
+                        return -1
+
                 res_tuple = struct.unpack(
-                        "fff",
+                        self.packet_type,
                         s)
-                assert(type(res_tuple) is tuple), (type(res_list), res_tuple)
                 self.queue.put(res_tuple)
             except socket.timeout:
+                self.stop()
                 traceback.print_exc()
                 pass
 
@@ -65,8 +78,8 @@ class _TcpSyncClient(threading.Thread):
 class UhdSyncMsg(object):
     """Creates a thread to connect to the synchronous uhd messages tcp port"""
 
-    def __init__(self, ip_address = "127.0.0.1", port = 47009):
-        self.tcpa = _TcpSyncClient(ip_address, port)
+    def __init__(self, ip_address = "127.0.0.1", port = 47009, packet_size = 3, packet_type = "fff"):
+        self.tcpa = _TcpSyncClient(ip_address, port, packet_size, packet_type)
         self.tcpa.start()
 
     def __exit__(self):
@@ -75,6 +88,13 @@ class UhdSyncMsg(object):
     def stop(self):
         """stop tcp thread"""
         self.tcpa.stop()
+
+    def get_msgs(self, num):
+        """get received messages as string of integer"""
+        out = []
+        while len(out) < num:
+            out.append(self.tcpa.queue.get())
+        return out
 
     def get_res(self):
         """get received messages as string of integer"""
