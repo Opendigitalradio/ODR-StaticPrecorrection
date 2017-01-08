@@ -22,36 +22,43 @@
   <param>
     <name>a2</name> 
     <key>a2</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a3</name>
     <key>a3</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a4</name>
     <key>a4</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a5</name>
     <key>a5</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a6</name>
     <key>a6</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a7</name>
     <key>a7</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <param>
     <name>a8</name>
     <key>a8</key>
+    <value>0</value>
     <type>real</type>
   </param>
   <sink>

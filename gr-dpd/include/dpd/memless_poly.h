@@ -48,7 +48,14 @@ namespace gr {
        */
       static sptr make(float a1, float a2, float a3, float a4, float a5, float a6, float a7, float a8);
 
+      virtual void set_a1(float sens) = 0;
       virtual void set_a2(float sens) = 0;
+      virtual void set_a3(float sens) = 0;
+      virtual void set_a4(float sens) = 0;
+      virtual void set_a5(float sens) = 0;
+      virtual void set_a6(float sens) = 0;
+      virtual void set_a7(float sens) = 0;
+      virtual void set_a8(float sens) = 0;
 
     };
 

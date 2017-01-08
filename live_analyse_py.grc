@@ -369,7 +369,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(312, 141)</value>
+      <value>(192, 133)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -445,6 +445,77 @@
     <param>
       <key>vlen</key>
       <value>1</value>
+    </param>
+  </block>
+  <block>
+    <key>dpd_memless_poly</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(480, 99)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>dpd_memless_poly_0</value>
+    </param>
+    <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a1</key>
+      <value>1</value>
+    </param>
+    <param>
+      <key>a2</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a3</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a4</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a5</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a6</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a7</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>a8</key>
+      <value>0</value>
     </param>
   </block>
   <block>
@@ -2457,13 +2528,19 @@
   </block>
   <connection>
     <source_block_id>blocks_file_source_0</source_block_id>
-    <sink_block_id>uhd_usrp_sink_0</sink_block_id>
+    <sink_block_id>dpd_memless_poly_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
   <connection>
     <source_block_id>blocks_message_burst_source_0_0</source_block_id>
     <sink_block_id>blks2_tcp_sink_1</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>dpd_memless_poly_0</source_block_id>
+    <sink_block_id>uhd_usrp_sink_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
