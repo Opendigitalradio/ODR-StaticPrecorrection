@@ -461,7 +461,7 @@
     </param>
     <param>
       <key>file</key>
-      <value>/home/andreas/dab/dab_normalized_c64.dat</value>
+      <value>/home/andreas/dab/ODR-StaticPrecorrection/input.dat</value>
     </param>
     <param>
       <key>_coordinate</key>
