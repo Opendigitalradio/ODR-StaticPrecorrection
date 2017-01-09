@@ -9,8 +9,8 @@ def gen_two_tone(path = "./input.dat", predist = None, par = None, debug = False
     assert(t_both / period2 % 1 == 0)
 
     t = np.arange(0,t_both)
-    sin1 = np.sin(t * 2 * np.pi * 1./period1)
-    sin2 = np.sin(t * 2 * np.pi * 1./period2)
+    sin1 = np.exp(t * 2j * np.pi * 1./period1)
+    sin2 = np.exp(t * 2j * np.pi * 1./period2)
     sig = sin1 + sin2
 
     if predist is None:
@@ -52,18 +52,18 @@ def analyse_power_spec(spec, debug = False, debug_path="", suffix=""):
     second_peak = spec_start + 2114
     delta_freq = 66
     peak_other = []
-    if debug: plt.plot(spec[spec_start:spec_end])
+    if debug: plt.plot(spec)
     for x in [c * delta_freq + delta_freq//2 for c in range(spec_start//delta_freq)]:
         start = spec_start + x 
         end = spec_start + x + delta_freq
         peak = spec[start:end].max()
-        if debug: plt.plot((start-spec_start,end-spec_start), (peak, peak))
+        if debug: plt.plot((start,end), (peak, peak))
         if start < first_peak and end > first_peak:
             peak_1 = peak
-            if debug: plt.plot((start-spec_start,end-spec_start), (peak+1, peak+1))
+            if debug: plt.plot((start,end), (peak+1, peak+1))
         elif start < second_peak and end > second_peak:
             peak_2 = peak
-            if debug: plt.plot((start-spec_start,end-spec_start), (peak+1, peak+1))
+            if debug: plt.plot((start,end), (peak+1, peak+1))
         else:
             peak_other.append(peak)
     mean_signal = (peak_1 + peak_2) / 2
