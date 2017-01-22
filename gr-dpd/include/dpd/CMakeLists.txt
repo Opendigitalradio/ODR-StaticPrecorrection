@@ -22,5 +22,7 @@
 ########################################################################
 install(FILES
     api.h
-    memless_poly.h DESTINATION include/dpd
+    memless_poly.h
+    lut.h
+    clut.h DESTINATION include/dpd
 )

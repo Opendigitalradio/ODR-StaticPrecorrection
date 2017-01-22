@@ -18,5 +18,7 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    dpd_memless_poly.xml DESTINATION share/gnuradio/grc/blocks
+    dpd_memless_poly.xml
+    dpd_lut.xml
+    dpd_clut.xml DESTINATION share/gnuradio/grc/blocks
 )

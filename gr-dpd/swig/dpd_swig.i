@@ -9,8 +9,14 @@
 
 %{
 #include "dpd/memless_poly.h"
+#include "dpd/lut.h"
+#include "dpd/clut.h"
 %}
 
 
 %include "dpd/memless_poly.h"
 GR_SWIG_BLOCK_MAGIC2(dpd, memless_poly);
+%include "dpd/lut.h"
+GR_SWIG_BLOCK_MAGIC2(dpd, lut);
+%include "dpd/clut.h"
+GR_SWIG_BLOCK_MAGIC2(dpd, clut);
