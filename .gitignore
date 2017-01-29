@@ -39,6 +39,7 @@ myplot.pickle
 run.py
 run.txt
 two_tone_tuner.py
+*.dat
 
 
 
