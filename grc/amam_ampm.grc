@@ -46,7 +46,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>amam_amap</value>
+      <value>amam_ampm</value>
     </param>
     <param>
       <key>max_nouts</key>
@@ -213,7 +213,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(336, 228)</value>
+      <value>(296, 228)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -374,7 +374,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(136, 221)</value>
+      <value>(104, 221)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -429,7 +429,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(640, 228)</value>
+      <value>(632, 260)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2880,6 +2880,12 @@
   <connection>
     <source_block_id>dpd_memless_poly_0</source_block_id>
     <sink_block_id>blocks_multiply_const_vxx_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+  <connection>
+    <source_block_id>dpd_memless_poly_0</source_block_id>
+    <sink_block_id>uhd_usrp_sink_0_0</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>
