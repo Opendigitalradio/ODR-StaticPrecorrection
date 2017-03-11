@@ -21,7 +21,7 @@ class ReceiveDictTcp(object):
         self.sock.listen(5)
         while True:
             client, address = self.sock.accept()
-            client.settimeout(60)
+            client.settimeout(0)
             print("connecting to " + str(client) + " " + str(address)) 
             self.listenToClient(client,address)
 
