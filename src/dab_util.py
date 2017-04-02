@@ -3,9 +3,13 @@ import scipy
 import matplotlib.pyplot as plt
 import fftconvolve
 
-c = {
-        "bw":1536000
-        }
+c = {}
+c["bw"]=1536000
+c["frame_ms"]=96
+c["frame_8192000"]=c["frame_ms"] * 8192
+c["frame_2048000"]=c["frame_ms"] * 2048
+c["sym_8192000"]=96./76*8192
+c["sym_2048000"]=96./76*2048
 
 def calc_fft(signal, fft_size = 1024, sampling_rate = 1, plot = False):
     """returns one numpy array for the frequencies and one for the corresponding fft"""

@@ -5,9 +5,10 @@ from Queue import Queue
 import sys
 
 class ReceiveDictTcp(object):
-    def __init__(self, host, port):
+    def __init__(self, host, port, verbose=False):
         self.host = host
         self.port = port
+        self.verbose = verbose
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
@@ -21,17 +22,18 @@ class ReceiveDictTcp(object):
         self.sock.listen(5)
         while True:
             client, address = self.sock.accept()
-            client.settimeout(0)
-            print("connecting to " + str(client) + " " + str(address)) 
+            client.setblocking(1)
+            if self.verbose: print("connecting to " + str(client) + " " + str(address))
             self.listenToClient(client,address)
 
     def listenToClient(self, client, address):
         size = 1024
         while True:
+            if self.verbose: print("Try receiving")
             try:
                 data = client.recv(size)
                 if data:
-                    # Set the response to echo back the recieved data 
+                    # Set the response to echo back the recieved data
                     jresponse = data
                     response = json.loads(jresponse)
                     client.send(json.dumps(response))

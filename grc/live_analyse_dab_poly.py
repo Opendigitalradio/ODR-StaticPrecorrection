@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Live Analyse Dab Poly
-# Generated: Sun Jan 29 11:34:39 2017
+# Generated: Sun Mar 26 13:22:00 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -17,7 +17,6 @@ if __name__ == '__main__':
             print "Warning: failed to XInitThreads()"
 
 from PyQt4 import Qt
-from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import eng_notation
 from gnuradio import gr
@@ -63,12 +62,12 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         ##################################################
         self.samp_rate = samp_rate = 8e6
         self.txgain = txgain = 80
+        self.shift_freq = shift_freq = 1
         self.rxgain = rxgain = 10
         self.freq = freq = 222e6
-        self.f_2 = f_2 = 4096000
-        self.f_1 = f_1 = 4096000
         self.f2 = f2 = samp_rate / 3.875
         self.f1 = f1 = samp_rate / 4
+        self.choose_dist = choose_dist = 1
         self.ampl = ampl = 0.4
         self.a_8 = a_8 = 0
         self.a_7 = a_7 = 0
@@ -77,7 +76,7 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.a_4 = a_4 = 0
         self.a_3 = a_3 = 0
         self.a_2 = a_2 = 0
-        self.a_1 = a_1 = 0
+        self.a_1 = a_1 = 1
 
         ##################################################
         # Message Queues
@@ -93,15 +92,9 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self._rxgain_range = Range(0, 100, 1, 10, 200)
         self._rxgain_win = RangeWidget(self._rxgain_range, self.set_rxgain, "rxgain", "counter_slider", float)
         self.top_layout.addWidget(self._rxgain_win)
-        self._f_2_range = Range(1, 8000000, 1, 4096000, 200)
-        self._f_2_win = RangeWidget(self._f_2_range, self.set_f_2, "f_2", "counter_slider", float)
-        self.top_layout.addWidget(self._f_2_win)
-        self._f_1_range = Range(1, 8000000, 1, 4096000, 200)
-        self._f_1_win = RangeWidget(self._f_1_range, self.set_f_1, "f_1", "counter_slider", float)
-        self.top_layout.addWidget(self._f_1_win)
-        self._ampl_range = Range(-1, 1, 0.0001, 0.4, 200)
-        self._ampl_win = RangeWidget(self._ampl_range, self.set_ampl, "ampl", "counter_slider", float)
-        self.top_layout.addWidget(self._ampl_win)
+        self._choose_dist_range = Range(0, 1, 1, 1, 200)
+        self._choose_dist_win = RangeWidget(self._choose_dist_range, self.set_choose_dist, "a_1", "counter_slider", float)
+        self.top_layout.addWidget(self._choose_dist_win)
         self._a_8_range = Range(-1, 1, 0.001, 0, 200)
         self._a_8_win = RangeWidget(self._a_8_range, self.set_a_8, "a_8", "counter_slider", float)
         self.top_layout.addWidget(self._a_8_win)
@@ -123,7 +116,7 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self._a_2_range = Range(-1, 1, 0.001, 0, 200)
         self._a_2_win = RangeWidget(self._a_2_range, self.set_a_2, "a_2", "counter_slider", float)
         self.top_layout.addWidget(self._a_2_win)
-        self._a_1_range = Range(-1, 1, 0.001, 0, 200)
+        self._a_1_range = Range(-10, 10, 0.001, 1, 200)
         self._a_1_win = RangeWidget(self._a_1_range, self.set_a_1, "a_1", "counter_slider", float)
         self.top_layout.addWidget(self._a_1_win)
         self.uhd_usrp_source_0 = uhd.usrp_source(
@@ -147,6 +140,9 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.uhd_usrp_sink_0.set_center_freq(freq, 0)
         self.uhd_usrp_sink_0.set_gain(txgain, 0)
         self.uhd_amsg_source_0 = uhd.amsg_source(device_addr="", msgq=uhd_amsg_source_0_msgq_out)
+        self._shift_freq_range = Range(-8000000, 8000000, 1, 1, 200)
+        self._shift_freq_win = RangeWidget(self._shift_freq_range, self.set_shift_freq, "shift_freq", "counter_slider", float)
+        self.top_layout.addWidget(self._shift_freq_win)
         self.qtgui_freq_sink_x_0_0 = qtgui.freq_sink_c(
         	16000, #size
         	firdes.WIN_BLACKMAN_hARRIS, #wintype
@@ -191,22 +187,27 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.dpd_memless_poly_0 = dpd.memless_poly(a_1, a_2, a_3, a_4, a_5, a_6, a_7, a_8)
         self.blocks_null_sink_0_2_0 = blocks.null_sink(gr.sizeof_gr_complex*1)
         self.blocks_null_sink_0_2 = blocks.null_sink(gr.sizeof_char*1)
+        self.blocks_multiply_const_vxx_2 = blocks.multiply_const_vcc((choose_dist, ))
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_vcc((1, ))
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vcc((ampl, ))
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vcc((1-choose_dist, ))
         self.blocks_message_burst_source_0 = blocks.message_burst_source(gr.sizeof_char*1, blocks_message_burst_source_0_msgq_in)
+        self.blocks_file_source_0_0 = blocks.file_source(gr.sizeof_gr_complex*1, "/home/andreas/dab/test_dat/out.iq", True)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, "/home/andreas/dab/test_dat_dist/out.iq", True)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
-        self.analog_sig_source_x_1 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, f_1, 0.45, 0)
-        self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, f_2, 0.45, 0)
+        self._ampl_range = Range(-1, 1, 0.0001, 0.4, 200)
+        self._ampl_win = RangeWidget(self._ampl_range, self.set_ampl, "ampl", "counter_slider", float)
+        self.top_layout.addWidget(self._ampl_win)
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_add_xx_0, 1))    
-        self.connect((self.analog_sig_source_x_1, 0), (self.blocks_add_xx_0, 0))    
-        self.connect((self.blocks_add_xx_0, 0), (self.blocks_multiply_const_vxx_0, 0))    
+        self.connect((self.blocks_add_xx_0, 0), (self.dpd_memless_poly_0, 0))    
+        self.connect((self.blocks_file_source_0, 0), (self.blocks_multiply_const_vxx_2, 0))    
+        self.connect((self.blocks_file_source_0_0, 0), (self.blocks_multiply_const_vxx_0, 0))    
         self.connect((self.blocks_message_burst_source_0, 0), (self.blocks_null_sink_0_2, 0))    
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.dpd_memless_poly_0, 0))    
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_add_xx_0, 1))    
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.uhd_usrp_sink_0, 0))    
+        self.connect((self.blocks_multiply_const_vxx_2, 0), (self.blocks_add_xx_0, 0))    
         self.connect((self.dpd_memless_poly_0, 0), (self.blocks_multiply_const_vxx_1, 0))    
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_null_sink_0_2_0, 0))    
         self.connect((self.uhd_usrp_source_0, 0), (self.qtgui_freq_sink_x_0_0, 0))    
@@ -224,8 +225,6 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.set_f1(self.samp_rate / 4)
         self.set_f2(self.samp_rate / 3.875)
-        self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
-        self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate)
         self.qtgui_freq_sink_x_0_0.set_frequency_range(0, self.samp_rate)
         self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
@@ -237,6 +236,12 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.txgain = txgain
         self.uhd_usrp_sink_0.set_gain(self.txgain, 0)
         	
+
+    def get_shift_freq(self):
+        return self.shift_freq
+
+    def set_shift_freq(self, shift_freq):
+        self.shift_freq = shift_freq
 
     def get_rxgain(self):
         return self.rxgain
@@ -254,20 +259,6 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.uhd_usrp_sink_0.set_center_freq(self.freq, 0)
         self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
 
-    def get_f_2(self):
-        return self.f_2
-
-    def set_f_2(self, f_2):
-        self.f_2 = f_2
-        self.analog_sig_source_x_0.set_frequency(self.f_2)
-
-    def get_f_1(self):
-        return self.f_1
-
-    def set_f_1(self, f_1):
-        self.f_1 = f_1
-        self.analog_sig_source_x_1.set_frequency(self.f_1)
-
     def get_f2(self):
         return self.f2
 
@@ -280,12 +271,19 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
     def set_f1(self, f1):
         self.f1 = f1
 
+    def get_choose_dist(self):
+        return self.choose_dist
+
+    def set_choose_dist(self, choose_dist):
+        self.choose_dist = choose_dist
+        self.blocks_multiply_const_vxx_0.set_k((1-self.choose_dist, ))
+        self.blocks_multiply_const_vxx_2.set_k((self.choose_dist, ))
+
     def get_ampl(self):
         return self.ampl
 
     def set_ampl(self, ampl):
         self.ampl = ampl
-        self.blocks_multiply_const_vxx_0.set_k((self.ampl, ))
 
     def get_a_8(self):
         return self.a_8

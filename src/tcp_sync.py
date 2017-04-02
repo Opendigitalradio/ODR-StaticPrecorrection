@@ -5,6 +5,7 @@ import Queue
 import time
 import socket
 import struct
+import numpy as np
 
 class _TcpSyncClient(threading.Thread):
     """Thead for message polling"""
@@ -54,7 +55,7 @@ class _TcpSyncClient(threading.Thread):
                     if (len(s)) == self.packet_size:
                         break
                     if (len(s)) > self.packet_size:
-                        print("received wrong size of length " + str(len(s)))
+                        print("received wrong size of length " + str(len(s)) + " instead of " + str(self.packet_size))
                         time.sleep(0.01)
                         return -1
 
@@ -95,6 +96,16 @@ class UhdSyncMsg(object):
         while len(out) < num:
             out.append(self.tcpa.queue.get())
         return out
+
+    def get_msgs_fft(self, num):
+        """
+        get received messages as string of integer
+        apply fftshift to message
+        """
+        out = []
+        while len(out) < num:
+            out.append(self.tcpa.queue.get())
+        return [np.fft.fftshift(np.array(o)) for o in out]
 
     def get_res(self):
         """get received messages as string of integer"""
