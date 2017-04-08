@@ -987,7 +987,7 @@
     </param>
     <param>
       <key>frame_rate</key>
-      <value>20</value>
+      <value>100</value>
     </param>
     <param>
       <key>_coordinate</key>
