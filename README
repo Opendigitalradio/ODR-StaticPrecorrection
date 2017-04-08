@@ -1,5 +1,5 @@
-sync-measurement-while-sending.ipynb:
+gr_server.py
 Starts the parallel_measurement gnu radio script and a server to control coefficients, txgain and rxtain.
 
-receive_tcp.ipynb:
-Receives the measurements from sync-measurement-while-sending.ipynb and controls it's parameters.
+gr_client.py
+Receives the measurements from gr_server and controls it's parameters.
