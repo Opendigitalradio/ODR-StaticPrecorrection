@@ -41,6 +41,10 @@ run.txt
 two_tone_tuner.py
 *.dat
 
+grc/*.py
+out
+
+
 
 
 
