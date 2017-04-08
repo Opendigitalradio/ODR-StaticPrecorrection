@@ -45,23 +45,17 @@ class _TcpSyncClient(threading.Thread):
 
         #Read messages
         sock.settimeout(None)
+        s = ""
         while self.q_quit.empty():
             try:
-                s = ""
 
                 #concatenate to one package
                 while self.q_quit.empty():
                     s += sock.recv(self.packet_size)
-                    if (len(s)) == self.packet_size:
+                    if (len(s)) >= self.packet_size:
                         break
-                    if (len(s)) > self.packet_size:
-                        print("received wrong size of length " + str(len(s)) + " instead of " + str(self.packet_size))
-                        time.sleep(0.01)
-                        return -1
-
-                res_tuple = struct.unpack(
-                        self.packet_type,
-                        s)
+                res_tuple = struct.unpack( self.packet_type, s[:self.packet_size])
+                s = s[self.packet_size:]
                 self.queue.put(res_tuple)
             except socket.timeout:
                 self.stop()
