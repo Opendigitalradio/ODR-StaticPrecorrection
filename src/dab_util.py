@@ -11,7 +11,7 @@ c["frame_2048000"]=c["frame_ms"] * 2048
 c["sym_8192000"]=96./76*8192
 c["sym_2048000"]=96./76*2048
 
-def calc_fft(signal, fft_size = 1024, sampling_rate = 1, plot = False):
+def calc_fft(signal, fft_size = 65536, sampling_rate = 8192000, plot = False):
     """returns one numpy array for the frequencies and one for the corresponding fft"""
     signal_spectrum = np.fft.fftshift(np.fft.fft(signal, fft_size))
     freqs = np.fft.fftshift(np.fft.fftfreq(fft_size, d=1./sampling_rate))

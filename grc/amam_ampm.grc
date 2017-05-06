@@ -186,7 +186,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>84</value>
+      <value>81</value>
     </param>
   </block>
   <block>
@@ -370,7 +370,7 @@
     </param>
     <param>
       <key>file</key>
-      <value>/home/andreas/dab/ODR-StaticPrecorrection/input.dat</value>
+      <value>/home/andreas/dab/test_dat/out.iq</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -551,7 +551,7 @@
     </param>
     <param>
       <key>file</key>
-      <value>/home/andreas/dab/ODR-StaticPrecorrection/output.dat</value>
+      <value>/home/andreas/dab/ODR-StaticPrecorrection/recored.dat</value>
     </param>
     <param>
       <key>_coordinate</key>
