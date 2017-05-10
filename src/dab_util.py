@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import fftconvolve
+import src.dabconst as dabconst
 
 c = {}
 c["bw"]=1536000
@@ -77,3 +78,11 @@ def get_phase(ampl_1, ampl_2, a_out, a_in):
     idxs = (np.abs(a_in) > ampl_1) & (np.abs(a_in) < ampl_2)
     ratio = np.angle(a_out[idxs], deg=True) - np.angle(a_in[idxs], deg=True)
     return ratio.mean(), ratio.var()
+
+def get_transmission_frame_indices(n_frames, offset, rate = 2048000):
+    tm1 = dabconst.tm1(rate)
+    indices = [tm1.S_F * i + offset for i in range(n_frames)]
+    return indices
+
+def fromfile(filename, offset, length):
+    return np.memmap(filename, dtype=np.complex64, mode='r', offset=64/8*offset, shape=length)
