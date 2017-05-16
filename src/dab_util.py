@@ -3,6 +3,7 @@ import scipy
 import matplotlib.pyplot as plt
 import fftconvolve
 import src.dabconst as dabconst
+from scipy import signal
 
 c = {}
 c["bw"]=1536000
@@ -47,27 +48,45 @@ def crop_signal(signal, n_window = 1000, n_zeros = 120000, debug = False):
     signal = signal[max(0,idx_start - n_zeros): min(idx_end + n_zeros, signal.shape[0] -1)]
     return signal
 
-#def fftlag(signal_original, signal_rec):
+#def fftlag(sig_orig, sig_rec):
 #    """
 #    Efficient way to find lag between two signals
 #    Args:
-#        signal_original: The signal that has been sent
-#        signal_rec: The signal that has been recored
+#        sig_orig: The signal that has been sent
+#        sig_rec: The signal that has been recored
 #    """
-#    c = np.flipud(scipy.signal.fftconvolve(signal_original,np.flipud(signal_rec)))
+#    c = np.flipud(scipy.signal.fftconvolve(sig_orig,np.flipud(sig_rec)))
 #    #plt.plot(c)
-#    return np.argmax(c) - signal_original.shape[0] + 1
+#    return np.argmax(c) - sig_orig.shape[0] + 1
 
-def fftlag(signal_original, signal_rec, n_upsampling = 1):
+def lag(sig_orig, sig_rec):
+    """
+    Find lag between two signals
+    Args:
+        sig_orig: The signal that has been sent
+        sig_rec: The signal that has been recored
+    """
+    off = sig_rec.shape[0]
+    c = signal.correlate(sig_orig, sig_rec)
+    return np.argmax(c) - off + 1
+
+def lag_upsampling(sig_orig, sig_rec, n_up):
+    sig_orig_up = signal.resample(sig_orig, sig_orig.shape[0] * n_up)
+    sig_rec_up  = signal.resample(sig_rec, sig_rec.shape[0] * n_up)
+    l = lag(sig_orig_up, sig_rec_up)
+    l_orig = float(l) / n_up
+    return l_orig
+
+def fftlag(sig_orig, sig_rec, n_upsampling = 1):
     """
     Efficient way to find lag between two signals
     Args:
-        signal_original: The signal that has been sent
-        signal_rec: The signal that has been recored
+        sig_orig: The signal that has been sent
+        sig_rec: The signal that has been recored
     """
-    c = np.flipud(fftconvolve.fftconvolve(signal_original,np.flipud(signal_rec), n_upsampling))
+    c = np.flipud(fftconvolve.fftconvolve(sig_orig,np.flipud(sig_rec), n_upsampling))
     #plt.plot(c)
-    return (np.argmax(c) - signal_original.shape[0] + 1)
+    return (np.argmax(c) - sig_orig.shape[0] + 1)
 
 def get_amp_ratio(ampl_1, ampl_2, a_out_abs, a_in_abs):
     idxs = (a_in_abs > ampl_1) & (a_in_abs < ampl_2)

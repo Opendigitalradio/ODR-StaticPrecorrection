@@ -97,3 +97,9 @@ def gen_file_i(frequency_0, frequency_1, x1 = 0, x2 = 0, x3 = 0, x4 = 0, samp_ra
     assert(np.isclose(a_load, two_tone).all()), "Inconsistent stored file"
 
     return path
+
+def gen_sin(samples, oversampling, phi):
+    t = np.arange(samples, dtype=np.float)
+    sig = np.sin(((2*np.pi)/oversampling) * t - np.pi*phi/180.)
+    return sig
+
