@@ -1,7 +1,6 @@
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-import fftconvolve
 import src.dabconst as dabconst
 from scipy import signal
 
@@ -84,9 +83,15 @@ def fftlag(sig_orig, sig_rec, n_upsampling = 1):
         sig_orig: The signal that has been sent
         sig_rec: The signal that has been recored
     """
-    c = np.flipud(fftconvolve.fftconvolve(sig_orig,np.flipud(sig_rec), n_upsampling))
-    #plt.plot(c)
-    return (np.argmax(c) - sig_orig.shape[0] + 1)
+    #off = sig_rec.shape[0]
+    #fft1 = np.fft.fft(sig_orig, n=sig_orig.shape[0])
+    #fft2 = np.fft.fft(np.flipud(sig_rec), n=sig_rec.shape[0])
+    #fftc = fft1 * fft2
+    #c = np.fft.ifft(fftc)
+    c = signal.convolve(sig_orig, np.flipud(sig_rec))
+    #c = signal.correlate(sig_orig, sig_rec)
+    return c
+    return np.argmax(c) - off + 1
 
 def get_amp_ratio(ampl_1, ampl_2, a_out_abs, a_in_abs):
     idxs = (a_in_abs > ampl_1) & (a_in_abs < ampl_2)

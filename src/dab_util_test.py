@@ -1,9 +1,7 @@
 from scipy import signal
 import numpy as np
 import src.gen_source as gs
-reload(gs)
 import src.dab_util as du
-reload(du)
 
 def gen_test_signals(oversampling=4, sample_offset_float=0):
     off = int(sample_offset_float)
