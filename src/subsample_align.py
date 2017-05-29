@@ -3,6 +3,7 @@ import numpy as np
 from scipy import signal, optimize
 import sys
 import matplotlib.pyplot as plt
+import dab_util as du
 
 def gen_omega(length):
     if (length % 2) == 1:
@@ -59,29 +60,29 @@ def subsample_align(sig, ref_sig):
     optim_result = optimize.minimize_scalar(correlate_for_delay, bounds=(-1,1), method='bounded', options={'disp': True})
 
     if optim_result.success:
-        print("x:")
-        print(optim_result.x)
+        #print("x:")
+        #print(optim_result.x)
 
         best_tau = optim_result.x
 
-        print("Found subsample delay = {}".format(best_tau))
+        #print("Found subsample delay = {}".format(best_tau))
 
         # Prepare rotate_vec = fft_sig with rotated phase
         rotate_vec = np.exp(1j * best_tau * omega)
         rotate_vec[halflen] = np.cos(np.pi * best_tau)
         return np.fft.ifft(rotate_vec * fft_sig)
     else:
-        print("Could not optimize: " + optim_result.message)
+        #print("Could not optimize: " + optim_result.message)
         return np.zeros(0, dtype=np.complex64)
 
 if __name__ == "__main__":
-    phaseref_filename = "/home/bram/dab/aux/odr-dab-cir/phasereference.2048000.fc64.iq"
+    phaseref_filename = "/home/andreas/dab/ODR-StaticPrecorrection/data/samples/sample_orig_0.iq"
     phase_ref = np.fromfile(phaseref_filename, np.complex64)
 
     delay = 15
     n_up = 32
 
-    print("Generate signal with delay {}/{} = {}".format(delay, n_up, delay/n_up))
+    print("Generate signal with delay {}/{} = {}".format(delay, n_up, float(delay)/n_up))
     phase_ref_up = signal.resample(phase_ref, phase_ref.shape[0] * n_up)
     phase_ref_up_late = np.append(np.zeros(delay, dtype=np.complex64), phase_ref_up[:-delay])
     phase_ref_late = signal.resample(phase_ref_up_late, phase_ref.shape[0])

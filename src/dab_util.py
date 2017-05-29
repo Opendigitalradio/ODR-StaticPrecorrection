@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import src.dabconst as dabconst
+import src.subsample_align as sa
 from scipy import signal
 
 c = {}
@@ -76,22 +77,26 @@ def lag_upsampling(sig_orig, sig_rec, n_up):
     l_orig = float(l) / n_up
     return l_orig
 
-def fftlag(sig_orig, sig_rec, n_upsampling = 1):
+def subsample_align(sig1, sig2):
     """
-    Efficient way to find lag between two signals
-    Args:
-        sig_orig: The signal that has been sent
-        sig_rec: The signal that has been recored
+    Returns an aligned version of sig1 and sig2 by cropping and subsample alignment
     """
-    #off = sig_rec.shape[0]
-    #fft1 = np.fft.fft(sig_orig, n=sig_orig.shape[0])
-    #fft2 = np.fft.fft(np.flipud(sig_rec), n=sig_rec.shape[0])
-    #fftc = fft1 * fft2
-    #c = np.fft.ifft(fftc)
-    c = signal.convolve(sig_orig, np.flipud(sig_rec))
-    #c = signal.correlate(sig_orig, sig_rec)
-    return c
-    return np.argmax(c) - off + 1
+    off_meas = lag_upsampling(sig2, sig1, n_up=1)
+    off = int(abs(off_meas))
+
+    if off_meas > 0:
+        sig1 = sig1[:-off]
+        sig2 = sig2[off:]
+    elif off_meas < 0:
+        sig1 = sig1[off:]
+        sig2 = sig2[:-off]
+
+    if off % 2 == 1:
+        sig1 = sig1[:-1]
+        sig2 = sig2[:-1]
+
+    sig2 = sa.subsample_align(sig2, sig1)
+    return sig1, sig2
 
 def get_amp_ratio(ampl_1, ampl_2, a_out_abs, a_in_abs):
     idxs = (a_in_abs > ampl_1) & (a_in_abs < ampl_2)
@@ -108,5 +113,8 @@ def get_transmission_frame_indices(n_frames, offset, rate = 2048000):
     indices = [tm1.S_F * i + offset for i in range(n_frames)]
     return indices
 
-def fromfile(filename, offset, length):
-    return np.memmap(filename, dtype=np.complex64, mode='r', offset=64/8*offset, shape=length)
+def fromfile(filename, offset=0, length=None):
+    if length is None:
+        return np.memmap(filename, dtype=np.complex64, mode='r', offset=64/8*offset)
+    else:
+        return np.memmap(filename, dtype=np.complex64, mode='r', offset=64/8*offset, shape=length)
