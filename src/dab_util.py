@@ -81,6 +81,7 @@ def subsample_align(sig1, sig2):
     """
     Returns an aligned version of sig1 and sig2 by cropping and subsample alignment
     """
+    assert(sig2.dtype == 'complex64')
     off_meas = lag_upsampling(sig2, sig1, n_up=1)
     off = int(abs(off_meas))
 
@@ -95,7 +96,9 @@ def subsample_align(sig1, sig2):
         sig1 = sig1[:-1]
         sig2 = sig2[:-1]
 
+    assert(sig2.dtype == 'complex64')
     sig2 = sa.subsample_align(sig2, sig1)
+    assert(sig2.dtype == 'complex64')
     return sig1, sig2
 
 def get_amp_ratio(ampl_1, ampl_2, a_out_abs, a_in_abs):

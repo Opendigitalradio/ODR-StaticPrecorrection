@@ -70,7 +70,7 @@ def subsample_align(sig, ref_sig):
         # Prepare rotate_vec = fft_sig with rotated phase
         rotate_vec = np.exp(1j * best_tau * omega)
         rotate_vec[halflen] = np.cos(np.pi * best_tau)
-        return np.fft.ifft(rotate_vec * fft_sig)
+        return np.fft.ifft(rotate_vec * fft_sig).astype(np.complex64)
     else:
         #print("Could not optimize: " + optim_result.message)
         return np.zeros(0, dtype=np.complex64)
