@@ -77,6 +77,34 @@ def lag_upsampling(sig_orig, sig_rec, n_up):
     l_orig = float(l) / n_up
     return l_orig
 
+def subsample_align_upsampling(sig1, sig2, n_up=32):
+    """
+    Returns an aligned version of sig1 and sig2 by cropping and subsample alignment
+    Using upsampling
+    """
+    assert(sig1.shape[0] == sig2.shape[0])
+
+    if sig1.shape[0] % 2 == 1:
+        sig1 = sig1[:-1]
+        sig2 = sig2[:-1]
+
+    sig1_up = signal.resample(sig1, sig1.shape[0] * n_up)
+    sig2_up = signal.resample(sig2, sig2.shape[0] * n_up)
+
+    off_meas = lag_upsampling(sig2_up, sig1_up, n_up=1)
+    off = int(abs(off_meas))
+
+    if off_meas > 0:
+        sig1_up = sig1_up[:-off]
+        sig2_up = sig2_up[off:]
+    elif off_meas < 0:
+        sig1_up = sig1_up[off:]
+        sig2_up = sig2_up[:-off]
+
+    sig1 = signal.resample(sig1_up, sig1_up.shape[0] / n_up).astype(np.complex64)
+    sig2 = signal.resample(sig2_up, sig2_up.shape[0] / n_up).astype(np.complex64)
+    return sig1, sig2
+
 def subsample_align(sig1, sig2):
     """
     Returns an aligned version of sig1 and sig2 by cropping and subsample alignment

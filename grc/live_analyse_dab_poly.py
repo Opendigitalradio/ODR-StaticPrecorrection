@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Live Analyse Dab Poly
-# Generated: Tue May 23 20:21:44 2017
+# Generated: Wed Jun  7 21:22:24 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -60,12 +60,13 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
+        self.samp_rate = samp_rate = 8e6
         self.txgain = txgain = 80
         self.shift_freq = shift_freq = 1
-        self.samp_rate_2 = samp_rate_2 = 2048000
-        self.samp_rate_1 = samp_rate_1 = 8192000
         self.rxgain = rxgain = 10
         self.freq = freq = 222e6
+        self.f2 = f2 = samp_rate / 3.875
+        self.f1 = f1 = samp_rate / 4
         self.ampl = ampl = 0.4
         self.a_8 = a_8 = 0
         self.a_7 = a_7 = 0
@@ -121,7 +122,7 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         		channels=range(1),
         	),
         )
-        self.uhd_usrp_source_0.set_samp_rate(samp_rate_2)
+        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_center_freq(freq, 0)
         self.uhd_usrp_source_0.set_gain(rxgain, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
@@ -131,7 +132,7 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         		channels=range(1),
         	),
         )
-        self.uhd_usrp_sink_0.set_samp_rate(samp_rate_1)
+        self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
         self.uhd_usrp_sink_0.set_center_freq(freq, 0)
         self.uhd_usrp_sink_0.set_gain(txgain, 0)
         self.uhd_amsg_source_0 = uhd.amsg_source(device_addr="", msgq=uhd_amsg_source_0_msgq_out)
@@ -142,7 +143,7 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         	16000, #size
         	firdes.WIN_BLACKMAN_hARRIS, #wintype
         	0, #fc
-        	samp_rate_2, #bw
+        	samp_rate, #bw
         	"", #name
         	1 #number of inputs
         )
@@ -205,6 +206,17 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         event.accept()
 
 
+    def get_samp_rate(self):
+        return self.samp_rate
+
+    def set_samp_rate(self, samp_rate):
+        self.samp_rate = samp_rate
+        self.set_f1(self.samp_rate / 4)
+        self.set_f2(self.samp_rate / 3.875)
+        self.qtgui_freq_sink_x_0_0.set_frequency_range(0, self.samp_rate)
+        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
+        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
+
     def get_txgain(self):
         return self.txgain
 
@@ -218,21 +230,6 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
 
     def set_shift_freq(self, shift_freq):
         self.shift_freq = shift_freq
-
-    def get_samp_rate_2(self):
-        return self.samp_rate_2
-
-    def set_samp_rate_2(self, samp_rate_2):
-        self.samp_rate_2 = samp_rate_2
-        self.qtgui_freq_sink_x_0_0.set_frequency_range(0, self.samp_rate_2)
-        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate_2)
-
-    def get_samp_rate_1(self):
-        return self.samp_rate_1
-
-    def set_samp_rate_1(self, samp_rate_1):
-        self.samp_rate_1 = samp_rate_1
-        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate_1)
 
     def get_rxgain(self):
         return self.rxgain
@@ -249,6 +246,18 @@ class live_analyse_dab_poly(gr.top_block, Qt.QWidget):
         self.freq = freq
         self.uhd_usrp_sink_0.set_center_freq(self.freq, 0)
         self.uhd_usrp_source_0.set_center_freq(self.freq, 0)
+
+    def get_f2(self):
+        return self.f2
+
+    def set_f2(self, f2):
+        self.f2 = f2
+
+    def get_f1(self):
+        return self.f1
+
+    def set_f1(self, f1):
+        self.f1 = f1
 
     def get_ampl(self):
         return self.ampl
